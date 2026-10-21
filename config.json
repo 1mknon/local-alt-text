@@ -1,0 +1,123 @@
+{
+  "general": {
+    "classifier_model": "google/siglip2-base-patch16-224",
+    "keep_alive": "60m",
+    "preclassify": false,
+    "llms": {
+      "od": true,
+      "qwen": true
+    },
+    "max_alt_chars": 200,
+    "ctx": 8192,
+    "od_conf_min": 0.45,
+    "action_conf_min": 0.6,
+    "action_prompt_min": 0.85,
+    "judge": {
+      "model": "qwen2.5vl:7b",
+      "url": "",
+      "api_key": ""
+    },
+    "metrics_csv": "metricas.csv",
+    "comparison_csv": "metricas_semanticas.csv",
+    "language_suffix": "Answer exclusively in Brazilian Portuguese. Never use Chinese, Japanese, or characters from any language other than Portuguese.",
+    "downloads_dir": "downloads",
+    "examples_dir": "exemplos",
+    "gajim_alt_marker": "[Aa]lt text[^\\n]*?\\s*@(\\S+)\\s*\\((\\d{1,2}):(\\d{2})\\):\\s*(.*)$"
+  },
+  "heuristics": {
+    "exif_confidence": 0.95,
+    "screenshot_noise_max": 1.0,
+    "screenshot_edge_min": 0.15,
+    "screen_ratio_set": [
+      [
+        16,
+        9
+      ],
+      [
+        16,
+        10
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        3,
+        2
+      ]
+    ],
+    "dark_lum_max": 80,
+    "illustration_ucr_max": 0.45,
+    "bw_noise_min": 1.5,
+    "photo_ucr_min": 0.55,
+    "photo_ucr_fallback_min": 0.4,
+    "photo_noise_min": 2.0,
+    "photo_noise_max": 15.0,
+    "photo_low_noise_max": 3.0,
+    "diagram_edge_min": 0.25,
+    "diagram_lum_min": 180,
+    "lowlight_noise_min": 8.0
+  },
+  "routes": {
+    "generic": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1024,
+      "num_predict": 250,
+      "prompt": "Describe what you see in this image in one or two short sentences, at most 200 characters total. Never exceed 200 characters. Do not presume whether it is a photograph or an illustration; state what it is. Mention the main subjects, the setting, and any visible text (in quotes). Do not invent details."
+    },
+    "photo": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1024,
+      "num_predict": 250,
+      "prompt": "Describe this photograph in one or two short sentences, at most 200 characters total. Never exceed 200 characters. Mention the main subjects, the setting, and the action. Include visible attributes a blind reader cannot infer from context. If there is large readable text, a title, a sign, a brand or a clearly legible caption, quote it. Do not use lists or bullets."
+    },
+    "illustration": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1024,
+      "num_predict": 250,
+      "prompt": "Describe this illustration in one or two short sentences, at most 200 characters total. Never exceed 200 characters. Identify the visual style. Describe the main characters and the action. If there is clearly legible text (speech bubble, title, caption), quote it. Do not presume a franchise, character name or series."
+    },
+    "diagram": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1568,
+      "num_predict": 100,
+      "prompt": "Describe this diagram in one complete sentence, at most 150 characters. Say what it represents and its type (flowchart, schema, graph). If there is a clearly readable main title, quote it. Do not transcribe internal labels. If something is illegible, omit it."
+    },
+    "screenshot": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1568,
+      "num_predict": 100,
+      "prompt": "Describe this screenshot in one complete sentence, at most 150 characters. Say what the screen is (application, site, window) and its apparent purpose. If a title or application name is clearly visible, quote it. Do not list all text."
+    },
+    "screenshot_table": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1568,
+      "num_predict": 100,
+      "prompt": "This is a screenshot of a table or spreadsheet. Describe its purpose in one sentence (max 150 characters). Mention the subject, approximate number of columns and rows, and quote the title or headers if clearly legible. Do not transcribe cells."
+    },
+    "screenshot_terminal": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1568,
+      "num_predict": 100,
+      "prompt": "This is a terminal screenshot. In one sentence (max 150 characters), describe the main command executed and the general content of the output. Quote the command only if it is clearly legible."
+    },
+    "screenshot_code": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1568,
+      "num_predict": 100,
+      "prompt": "This is a code editor screenshot. In one sentence (max 150 characters), describe the apparent language, the purpose of the snippet, and the visible interface. Do not reproduce the code."
+    },
+    "screenshot_browser": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1568,
+      "num_predict": 100,
+      "prompt": "This is a browser screenshot. In one sentence (max 150 characters), describe the apparent site or page, the main title, and the purpose. Do not reproduce page text."
+    },
+    "screenshot_app": {
+      "model": "qwen2.5vl:7b",
+      "max_side": 1568,
+      "num_predict": 100,
+      "prompt": "This is an application screenshot. In one sentence (max 150 characters), describe which application it is, which screen is shown, and the purpose. Do not reproduce textual content."
+    }
+  }
+}

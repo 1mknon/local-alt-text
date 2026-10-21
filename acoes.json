@@ -1,0 +1,8 @@
+{
+  "picnic":   "People eating outdoors on a blanket",
+  "party":    "People celebrating, dancing, or drinking",
+  "meeting":  "People seated, discussing formally",
+  "posing":   "A single person or character facing the viewer in a portrait-like pose",
+  "working":  "A person performing manual labor, physical work, or a task",
+  "none":     "No identifiable action"
+}

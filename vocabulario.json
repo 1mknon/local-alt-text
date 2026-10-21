@@ -1,0 +1,16 @@
+{
+  "tipo_visual": {
+    "photography": "A photograph taken by a camera, showing real objects",
+    "screenshot": "A screenshot of a computer or phone screen",
+    "diagram": "A diagram, flowchart or technical schema",
+    "illustration": "A digital illustration or drawing",
+    "anime": "Anime style artwork",
+    "cartoon": "A cartoon illustration",
+    "pixel_art": "Pixel art",
+    "render_3d": "A computer-generated 3D scene",
+    "meme": "An internet meme with overlaid text",
+    "map": "A geographical map",
+    "document": "A scanned paper document",
+    "logo": "A logo on a plain background"
+  }
+}

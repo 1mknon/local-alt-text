@@ -1,0 +1,45 @@
+# Generated artifacts 
+downloads
+download*
+comparados/
+metricas*.csv
+*.alt.txt
+*.od.json
+manifest.json
+od_report.json
+blind.log
+
+# Logs 
+logs/
+*.log
+logs/*.jsonl
+
+# Python 
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.venv-opendecision/
+*.egg-info/
+
+# Editor 
+.DS_Store
+*.swp
+
+# Calibration scratch 
+calibracao/**/*.stderr
+
+# Regenerable / temp 
+*.bak
+.git.bak.*
+.git.dirty
+.backup-*
+test_*.py
+
+# Local config (paths of the host) 
+config.local.json
+ALT_CFG*
+metricas.csv.old
+coletados.json
+exemplos/
+referencias.json

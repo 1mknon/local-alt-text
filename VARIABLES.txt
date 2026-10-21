@@ -1,0 +1,371 @@
+REFERÊNCIA — alt-text pipeline
+==============================
+v1.0.0
+
+
+ESTRUTURA
+=========
+
+  alt.py                    Pipeline + CLI. Duas fases em batch.
+  runtime.py                LLMControl + CLI.
+  limpar.py                 Remove contratos/ALTs.
+  comparar.py               Sidecar vs REF + juiz text-only.
+  report.py                 Sumário de CSVs.
+  analisar_od.py            Análise de od_observacoes.jsonl.
+  collect.py                Extrai pares do history.txt do Gajim.
+  extract_heuristics.py     Classificador PIL.
+  extract_facts.py          Cliente OpenDecision.
+
+  Ollama e OpenDecision vivem fora do .venv do projeto:
+    - ollama: binário do sistema, iniciado por ensure_ollama() quando preciso.
+    - opendecision: instalado via uv tool ou pipx (isolado, ~3 GB).
+      runtime.py procura primeiro em .venv-opendecision/bin/opendecision
+      (instalação local opcional); se não existir, usa shutil.which("opendecision").
+
+  altlib/ — pacote compartilhado
+    paths.py                BASE_DIR, paths, sha256_file, relpath, resolve_dir
+    config.py               load_config, validate_config, routes_with_suffix
+    log.py                  log_event, log_stage
+    status.py               system_status, system_status_text
+    llm.py                  ensure_ollama, unload_ollama_model, llm_generate
+    image.py                resize_for_model, encode_image
+    contract.py             read_od, write_od
+    manifest.py             load, update
+    routing.py              TYPE_TO_ROUTE
+    __init__.py             re-exports públicos
+
+  config.json               config principal (validada)
+  vocabulario.json          tipo visual SigLIP2 (inglês)
+  acoes.json                classes de ação SigLIP2 (inglês)
+  referencias.json          ALTs de calibração (privado, não versionado)
+  manifest.json             Histórico (gerado)
+
+  exemplos/                 calibração (privada, não versionada)
+  downloads/                capturas reais (Gajim)
+  logs/                     execucao.jsonl, od_observacoes.jsonl
+  comparados/               cache do comparar.py
+
+
+FLUXO — UMA IMAGEM
+==================
+
+  1. Heurísticas (subprocess)
+     extract_heuristics.py <img> --route --json
+     ~0.1s. Retorna label, confidence, decidable, reason, heur_text.
+
+  2. OD (se decidable=False)
+     Consulta contrato <img>.od.json:
+       - existe, sha256 bate, shape atual → usa (0.00s)
+       - ausente ou stale → chama OD inline e regrava contrato
+     extract_facts.py faz 2 perguntas numa chamada:
+       visual_type (vocabulario.json) + action (acoes.json)
+     Grava contrato aninhado, loga visual_type em od_observacoes.jsonl.
+     Threshold od_conf_min (rota) e action_conf_min (action).
+
+  3. Geração
+     Qwen 7b com prompt da rota + heurística + visual_type + action.
+     Ação só entra no prompt se action_prob >= action_prompt_min.
+     Trunca em max_alt_chars. Grava sidecar <img>.alt.txt.
+
+
+FLUXO — BATCH
+=============
+
+  Fase 1: classificação (heurística + contrato ou OD inline).
+          stop_od() mata só o daemon OD; Qwen pode estar vivo.
+  Fase 2: geração (Qwen 7b carregado uma vez).
+
+  Warm: ~190s / 17 imagens. Cold: ~200s.
+
+
+CLI — alt.py
+============
+
+  img.jpg                  Uma imagem
+  --batch DIR              Diretório (2 fases)
+  --no-od                  Pula OD (heurística apenas)
+  --profile                Timings por estágio
+  --dry-run                Config + manifest + status
+  --no-metrics             Não grava em metricas.csv
+  --force                  Reprocessa mesmo com sidecar existente
+
+
+CLI — extract_heuristics.py
+===========================
+
+  img.jpg                  Análise completa (JSON indentado)
+  img.jpg --route --json   Decisão de rota (JSON compacto)
+
+
+CLI — extract_facts.py
+======================
+
+  img.jpg --json           Classifica (visual_type + action) e grava contrato
+  img.jpg --debug          Mostra request/response
+  --stop-server            Mata o daemon OD (só o OD, não o Ollama)
+
+
+CLI — comparar.py
+=================
+
+  (sem flag)               downloads/ (caso de uso real)
+  --examples               exemplos/ (calibração)
+  --all                    ambos
+  --csv PATH               CSV de saída (default: general.comparison_csv)
+  --quiet                  Uma linha por par
+  --limit N                Limita a N pares
+
+  --examples e --all são mutuamente exclusivos.
+
+
+CLI — report.py
+===============
+
+  alt                      metricas.csv
+  compare                  metricas_semanticas.csv
+  all                      ambos
+  --alt-csv PATH           override do CSV de ALT
+  --cmp-csv PATH           override do CSV de comparação
+
+
+CLI — analisar_od.py
+====================
+
+  (sem flag)               Relatório completo
+  --limit N                Limita a N imagens no listing individual
+  --json                   Saída JSON (para > od_report.json)
+  --log PATH               Caminho do JSONL
+
+  Lê od_observacoes.jsonl (visual_type apenas). Ação não é analisada
+  por este script — está nos contratos .od.json.
+
+
+CLI — runtime.py
+================
+
+  status                   JSON de estado (VRAM, modelos, manifest)
+  check {od,qwen}          Exit 0 se habilitado, 1 se não
+  ensure {od,qwen}         Sobe o LLM (VRAM-safe)
+  stop                     Mata Ollama + OD (uso: liberar GPU)
+
+
+CLI — limpar.py
+===============
+
+  (sem flag)               downloads/ (dados reais)
+  --examples               exemplos/ (calibração)
+  --all                    downloads/ + exemplos/
+
+  Menu: [o] remove contracts OD
+        [a] remove ALTs
+        [b] remove both
+        [n] choose by number
+        [q] quit
+
+  Remove contratos .od.json e/ou sidecars .alt.txt. Re-classificação
+  real (mudou vocabulário) requer [b]: contrato sozinho não basta se
+  o ALT existe e --batch skipa sem --force.
+
+
+CLI — collect.py
+================
+
+  history.txt              Caminho do history.txt
+  --output PATH            JSON de saída (default: coletados.json)
+  --downloads DIR          Override do diretório de downloads
+  --window N               Tolerância em segundos para match por mtime
+  --debug                  Verbose
+
+
+CONFIG — config.json
+====================
+
+[general] — obrigatórios
+
+  classifier_model         string. Modelo do OD (SigLIP2).
+  keep_alive               string. Injetado em cada rota.
+  metrics_csv              string. Path do CSV de métricas.
+  comparison_csv           string. Path do CSV de comparação.
+  max_alt_chars            int. Truncamento rígido. Default 200.
+  ctx                      int. num_ctx do Ollama. Default 8192.
+  od_conf_min              float 0..1. Threshold de override de rota.
+  action_conf_min          float 0..1. Threshold para gravar action.
+  action_prompt_min        float 0..1. Threshold para injetar action
+                           no prompt. Deve ser >= action_conf_min.
+  llms.od                  bool. Ativa OD globalmente.
+  llms.qwen                bool. Ativa Qwen.
+  judge.model              string. Modelo text-only do comparar.py.
+  judge.url, judge.api_key reservados para judge remoto (não usados).
+  language_suffix          string. Anexado ao prompt de toda rota.
+  downloads_dir            string. Diretório de capturas reais.
+  examples_dir             string. Diretório de calibração.
+  gajim_alt_marker         string. Regex do marcador de ALT no chat
+                           (usado por collect.py). Template; adapte.
+
+
+[heuristics] — thresholds determinísticos
+
+  exif_confidence, screenshot_noise_max, screenshot_edge_min,
+  screen_ratio_set, dark_lum_max, illustration_ucr_max, bw_noise_min,
+  photo_ucr_min, photo_ucr_fallback_min, photo_noise_min,
+  photo_noise_max, photo_low_noise_max, diagram_edge_min,
+  diagram_lum_min, lowlight_noise_min
+
+
+[routes] — uma por tipo visual
+
+  generic, photo, illustration, diagram, screenshot,
+  screenshot_table, screenshot_terminal, screenshot_code,
+  screenshot_browser, screenshot_app
+
+  Cada rota: model (string), max_side (int), num_predict (int),
+             prompt (string)
+
+  keep_alive injetado por routes_with_suffix a partir de general.
+
+
+TYPE_TO_ROUTE — altlib/routing.py
+=================================
+
+  Mapeia visual_type do OD → rota:
+
+    photography → photo      screenshot → screenshot
+    diagram → diagram        illustration → illustration
+    anime → illustration     pixel_art → illustration
+    render_3d → illustration logo → illustration
+    meme → photo             map → diagram
+    document → diagram
+
+  Ação não mapeia rota — só enriquece o prompt.
+
+
+VOCABULÁRIO — vocabulario.json
+==============================
+
+[tipo_visual]
+  Chaves e valores em inglês (SigLIP2 lê os valores).
+  Classes: photography, screenshot, diagram, illustration, anime,
+           cartoon, pixel_art, render_3d, meme, map, document, logo.
+
+
+VOCABULÁRIO — acoes.json
+========================
+
+  Dict flat: { "<classe>": "<descrição em inglês>" }
+  Classes atuais:
+    picnic, party, meeting, posing, working, none
+  "none" é obrigatório (permite ao OD declarar ação não identificada).
+
+  Fonte: alimentado manualmente (Qwen propõe, humano aprova).
+  Não auto-modificado pelo pipeline.
+
+
+CONTRATO — <img>.od.json
+========================
+
+  Produto do extract_facts.py. Consulta do alt.py.
+  Shape aninhado:
+
+  {
+    "image": "<basename>",
+    "image_path": "<relpath>",
+    "image_sha256": "<64 hex>",
+    "model": "google/siglip2-base-patch16-224",
+    "ts": "<iso>",
+    "visual_type": {
+      "choice": "<classe>",
+      "probabilities": { "<classe>": <float>, ... },
+      "confidence": <float>
+    },
+    "action": {
+      "choice": "<classe>",
+      "probabilities": { "<classe>": <float>, ... },
+      "confidence": <float>
+    }
+  }
+
+  alt.py: sha256 bate + visual_type presente → usa.
+  Diverge ou shape antigo → inline e regrava.
+  Ignorado pelo git (*.od.json no .gitignore).
+
+  Contrato só existe para imagens que passaram pelo OD. Imagens
+  decididas pela heurística (EXIF, resolução, ruído) não têm
+  contrato — a heurística é rápida, não precisa de cache.
+
+  NOTA: o contrato NÃO invalida automaticamente quando vocabulario.json
+  ou acoes.json mudam. Para reavaliar com vocabulário novo, rode
+  limpar.py e regenere com alt.py --batch.
+
+
+SIDECAR — <img>.alt.txt
+=======================
+
+  Texto do ALT
+  ---
+  classifier: heuristic | opendecision
+  kind:       <route>
+  confidence: float
+  model:      string
+  image_sha256: <64 hex>   sha256 da imagem
+  alt_sha256:   <64 hex>   sha256 do texto ALT
+  generated_at: <iso>
+
+  image_sha256 detecta imagem modificada (contrato fica stale).
+  alt_sha256 detecta ALT editado manualmente.
+
+
+MANIFEST — manifest.json
+========================
+
+  {
+    "last_batch":    { ts, dir, images, successful, model, elapsed_s },
+    "last_compare":  { ts, source, pairs, problems, judge },
+    "last_od_probe": { ... } (reservado)
+  }
+
+  Gravado por alt.py mode_batch, comparar.py main, runtime.
+  Lido por alt.py --dry-run e runtime.py status.
+
+
+LOGS — logs/execucao.jsonl
+==========================
+
+  stage      heuristics, opendecision, resize, generate
+  llm        tokens, wall, swap, vram
+  swap       troca de modelo
+  alt_text   ALT final + timings + metrics
+
+
+LOGS — logs/od_observacoes.jsonl
+================================
+
+  Uma linha por chamada OD.
+  ts, image, image_sha256, choice (visual_type), probabilities, confidence.
+  Consumido por analisar_od.py.
+  Ação NÃO é logada aqui — está nos contratos .od.json.
+
+
+AMBIENTE
+========
+
+  OLLAMA_URL               default http://127.0.0.1:11434
+  ALT_CFG                  override para o caminho de config.json
+  ALT_NO_OD=1              desativa OD (prioridade máxima)
+  ALT_NO_QWEN=1            desativa Qwen
+
+CICLO DE VIDA DOS SERVIÇOS
+==========================
+
+  ollama serve
+    Auto-iniciado por ensure_ollama() (altlib/llm.py) se não estiver
+    rodando. Fica vivo entre chamadas (keep_alive=60m controla VRAM).
+    Não é reiniciado se já está no ar (idempotente).
+
+  opendecision serve
+    Auto-iniciado por _start_od() (runtime.py) quando OD_URL aponta
+    para loopback e OD não responde. É parado por stop_od() após uso,
+    para liberar VRAM ao Qwen.
+
+  Estado esperado após `alt.py img.png`:
+    - 1 ollama serve rodando (Qwen na VRAM, keep_alive 60m)
+    - 0 opendecision serve (parado por stop_od)
