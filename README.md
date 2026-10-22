@@ -27,6 +27,8 @@ v1.0.0 — funcional e validado em uso real.
 17 imagens em ~190s (warm). Primeira imagem ~55s (cold Qwen).
 Chamadas consecutivas warm (~7s) graças a `keep_alive`.
 
+**Estas referências cold/qwen é o tempo de injeção de VRAM, o programa fica bem mais rápido alocando OpenDecision e Qwen em conjunto na VRAM, o prejuízo de usar um modelo por vês seria essa situação do "cold".
+
 ## Requisitos
 
 - Python 3.11+
