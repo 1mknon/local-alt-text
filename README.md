@@ -37,24 +37,35 @@ Chamadas consecutivas warm (~7s) graças a `keep_alive`.
 
 ## Instalação
 
-  # Opção rápida (script)
-  ./install.sh
+**Opção rápida (script)**
+```bash
+./install.sh
+```
 
-  # 1. Ollama server (uma vez, fora do projeto)
-  ollama pull qwen2.5vl:7b
+## 1. Ollama server (uma vez, fora do projeto)
+```bash
+ollama pull qwen2.5vl:7b
+```
 
-  # 2. App (venv pequeno, só deps do pipeline)
-  python3 -m venv .venv
-  source .venv/bin/activate
-  pip install ollama Pillow httpx
+## 2. App (venv pequeno, só deps do pipeline)
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install ollama Pillow httpx
+```
 
-  # 3. OpenDecision isolado (uv tool ou pipx; ~3 GB fora do .venv)
-  uv tool install 'OpenDecision[images]'
-  # alternativa sem uv: pipx install 'OpenDecision[images]'
+## 3. OpenDecision isolado (uv tool ou pipx; ~3 GB fora do .venv)
+```bash
+uv tool install 'OpenDecision[images]'
+# alternativa sem uv:
+pipx install 'OpenDecision[images]'
+```
 
-  # 4. Verificar
-  opendecision --version        # deve responder 0.2.0
-  python3 alt.py --dry-run      # deve imprimir "config: 10 routes"
+## 4. Verificar
+```bash
+opendecision --version        # deve responder 0.2.0
+python3 alt.py --dry-run      # deve imprimir "config: 10 routes"
+```
 
 ## Comandos
 
