@@ -68,18 +68,17 @@ python3 alt.py --dry-run      # deve imprimir "config: 10 routes"
 
 ## Comandos
 
- -  python3 alt.py IMG.jpg                 ALT de uma imagem
- - python3 alt.py --batch DIR/            ALT de um diretório (2 fases)
- - python3 comparar.py --examples         ALT vs REFs (exige exemplos/ + referencias.json locais)
- - python3 limpar.py --all                seleciona downloads/ + exemplos/ (menu: [o]/[a]/[b])
+- `python3 alt.py IMG.jpg` - ALT de uma imagem
+- `python3 alt.py --batch DIR/` - ALT de um diretório (2 fases)
+- `python3 comparar.py --examples` - ALT vs REFs (exige calibração local)
+- `python3 limpar.py --all` - seleciona downloads/ + exemplos/ (menu)
 
-Flags úteis em `alt.py`:
-
-  --force         reprocessa mesmo se sidecar existe
-  --no-od         só heurística (debug, rápido)
-  --no-metrics    não escreve em metricas.csv
-  --profile       timings por estágio
-  --dry-run       config + status + manifest, sem processar
+**Flags úteis em `alt.py`:**
+- `--force` - reprocessa mesmo se sidecar existe
+- `--no-od` - só heurística (debug, rápido)
+- `--no-metrics` - não escreve em metricas.csv
+- `--profile` - timings por estágio
+- `--dry-run` - config + status + manifest, sem processar
 
 ## Pipeline (uma imagem)
 
