@@ -1,10 +1,25 @@
-# alt-text
+# Local Alt text
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+> **Disclaimer:** 100% vibecoded by deepseek chat with copy/paste and review.
+>
+> **Proposta de viabilidade:** Geração de ALT text de imagens localmente com baixa demanda de VRAM.
+>
+> A versão atual parece muito consistente e foi comparada lado a lado com o prompt idêntico pago da DeepSeek via API.
+>
+> Baseado nas tabelas de Ansel Adams, pedi para fazer histogramas determinísticos; formulei perguntas estratégicas para o OpenDecision, restringindo o cenário que o Qwen recebe e facilitando o output desejado.
+>
+> Testado em uma placa com `qwen2.5vl:7b` em 6 GB de VRAM. Funciona também com o `qwen2.5vl:3b`, com um pouco de prejuízo na leitura de textos na imagem.
+
+---
 
 Geração local de ALT para imagens via Ollama. Foco: acessibilidade.
 
 Pipeline em três estágios: heurísticas determinísticas → OpenDecision
 (classificação visual via SigLIP2) → geração via Qwen 7b. Config
 declarativo, sem fallbacks ocultos.
+
 
 ## Estado
 
@@ -21,6 +36,9 @@ Chamadas consecutivas warm (~7s) graças a `keep_alive`.
   necessário para `comparar.py --examples`)
 
 ## Instalação
+
+  # Opção rápida (script)
+  ./install.sh
 
   # 1. Ollama server (uma vez, fora do projeto)
   ollama pull qwen2.5vl:7b
@@ -43,7 +61,7 @@ Chamadas consecutivas warm (~7s) graças a `keep_alive`.
   python3 alt.py IMG.jpg                 ALT de uma imagem
   python3 alt.py --batch DIR/            ALT de um diretório (2 fases)
   python3 comparar.py --examples         ALT vs REFs (exige exemplos/ + referencias.json locais)
-  python3 limpar.py --all                remove contratos + ALTs (menu)
+  python3 limpar.py --all                seleciona downloads/ + exemplos/ (menu: [o]/[a]/[b])
 
 Flags úteis em `alt.py`:
 
@@ -103,26 +121,26 @@ Flags úteis em `alt.py`:
 
   Detalhes de cada campo em VARIABLES.txt.
 
-## Validation (optional)
+## Validação (opcional)
 
-`collect.py` gathers (image, reference ALT) pairs from a Gajim
-`history.txt` export. Use it when you want to compare your local pipeline
-against a "gold standard" produced by a high-capacity API bot (GPT-4V,
-Claude, Gemini, etc.).
+`collect.py` coleta pares (imagem, ALT de referência) a partir de um
+export `history.txt` do Gajim. Use quando quiser comparar seu pipeline
+local com um "gold standard" produzido por um bot de API de alta
+capacidade (GPT-4V, Claude, Gemini etc.).
 
-The marker regex lives in `config.json` under `general.gajim_alt_marker`.
-Adapt it for your bot's format. If it doesn't match, `collect.py` returns
-0 pairs with a warning.
+A regex do marcador fica em `config.json`, em `general.gajim_alt_marker`.
+Adapte ao formato do seu bot. Se não casar, `collect.py` retorna
+0 pares com um aviso.
 
     python3 collect.py ~/path/to/history.txt --output coletados.json
-    python3 comparar.py                       # sidecar vs reference
-    python3 report.py compare                 # aggregate
+    python3 comparar.py                       # sidecar vs referência
+    python3 report.py compare                 # agrega
 
-The output (`coletados.json`) contains chat data (URLs, reference ALTs,
-timestamps). **Never commit it.** `.gitignore` excludes it.
+A saída (`coletados.json`) contém dados de chat (URLs, ALTs de
+referência, timestamps). **Nunca commite.** O `.gitignore` exclui.
 
-This workflow is meant for a single user on their own data. It is not a
-general chat-log parser — the regex is a template that you adapt.
+Este fluxo é para um único usuário nos próprios dados. Não é um
+parser genérico de chat — a regex é um template que você adapta.
 
 ## Design
 
@@ -148,6 +166,7 @@ general chat-log parser — the regex is a template that you adapt.
 
 ## Estrutura
 
+  install.sh                instalação automatizada (venv + deps + OD + modelo)
   alt.py                    pipeline + CLI
   runtime.py                LLMControl + CLI (status/check/ensure/stop)
   limpar.py                 remove contratos/ALTs (menu)
@@ -180,3 +199,12 @@ general chat-log parser — the regex is a template that you adapt.
   python3 analisar_od.py           distribuição do SigLIP2
 
 Detalhes de cada campo em VARIABLES.txt.
+
+## Licença
+
+Este programa é software livre: você pode redistribuí-lo e/ou modificá-lo
+sob os termos da **GNU General Public License** conforme publicada pela
+Free Software Foundation, seja a versão 3 da Licença, ou (a seu critério)
+qualquer versão posterior.
+
+Veja o arquivo [LICENSE](LICENSE) para o texto completo.
