@@ -29,11 +29,10 @@ Chamadas consecutivas warm (~7s) graças a `keep_alive`.
 
 ## Requisitos
 
-  Python 3.11+
-  Ollama server (https://ollama.com) com qwen2.5vl:7b
-  OpenDecision instalado e disponível no PATH (`opendecision --version`)
-  Calibração privada: exemplos/ + referencias.json (opcional, só
-  necessário para `comparar.py --examples`)
+- Python 3.11+
+- Ollama server (https://ollama.com) com `qwen2.5vl:7b`
+- OpenDecision instalado no PATH (`opendecision --version`)
+- Calibração privada: `exemplos/` + `referencias.json` (opcional, só para `comparar.py --examples`)
 
 ## Instalação
 
@@ -69,10 +68,10 @@ python3 alt.py --dry-run      # deve imprimir "config: 10 routes"
 
 ## Comandos
 
-  python3 alt.py IMG.jpg                 ALT de uma imagem
-  python3 alt.py --batch DIR/            ALT de um diretório (2 fases)
-  python3 comparar.py --examples         ALT vs REFs (exige exemplos/ + referencias.json locais)
-  python3 limpar.py --all                seleciona downloads/ + exemplos/ (menu: [o]/[a]/[b])
+ -  python3 alt.py IMG.jpg                 ALT de uma imagem
+ - python3 alt.py --batch DIR/            ALT de um diretório (2 fases)
+ - python3 comparar.py --examples         ALT vs REFs (exige exemplos/ + referencias.json locais)
+ - python3 limpar.py --all                seleciona downloads/ + exemplos/ (menu: [o]/[a]/[b])
 
 Flags úteis em `alt.py`:
 
@@ -106,9 +105,9 @@ Flags úteis em `alt.py`:
 
 ## Contratos OD
 
-  <img>.od.json — ao lado da imagem, ignorado pelo git.
+-  <img>.od.json — ao lado da imagem, ignorado pelo git.
 
-  {
+-  {
     "image_sha256": "<64 hex>",
     "model": "google/siglip2-base-patch16-224",
     "ts": "<iso>",
@@ -116,9 +115,9 @@ Flags úteis em `alt.py`:
     "action":      { "choice", "probabilities", "confidence" }
   }
 
-  Só existe para imagens ambíguas. Imagens decididas pela heurística
+-  Só existe para imagens ambíguas. Imagens decididas pela heurística
   não têm contrato — a heurística é rápida, não precisa de cache.
-  Para reavaliar com vocabulário novo: `limpar.py --all` + `--batch`.
+-  Para reavaliar com vocabulário novo: `limpar.py --all` + `--batch`.
 
 ## Config
 
@@ -177,6 +176,7 @@ parser genérico de chat — a regex é um template que você adapta.
 
 ## Estrutura
 
+```text
   install.sh                instalação automatizada (venv + deps + OD + modelo)
   alt.py                    pipeline + CLI
   runtime.py                LLMControl + CLI (status/check/ensure/stop)
@@ -198,16 +198,17 @@ parser genérico de chat — a regex é um template que você adapta.
   exemplos/                 calibração (privada, não versionada)
   downloads/                capturas reais (Gajim)
   logs/                     execucao.jsonl, od_observacoes.jsonl
+```
 
-  Traga seu próprio exemplos/ e referencias.json. Ambos são
-  privados (não versionados) — o repositório não inclui imagens
-  nem ALTs de referência.
+Traga seu próprio exemplos/ e referencias.json. Ambos são
+privados (não versionados) — o repositório não inclui imagens
+nem ALTs de referência.
 
 ## Verificação
 
-  python3 alt.py --dry-run         config + status + manifest
-  python3 runtime.py status        VRAM, modelos, último batch
-  python3 analisar_od.py           distribuição do SigLIP2
+ - python3 alt.py --dry-run         config + status + manifest
+ - python3 runtime.py status        VRAM, modelos, último batch
+ - python3 analisar_od.py           distribuição do SigLIP2
 
 Detalhes de cada campo em VARIABLES.txt.
 
